@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 11.00
 # Atmel Studio Solution File, Format Version 11.00
-Project("{54F91283-7BC4-4236-8FF9-10F437C3AD48}") = "UltimateWorkingTitle", "UltimateWorkingTitle\UltimateWorkingTitle.cproj", "{195F10F6-EADB-41D1-9FFA-A9F0793A31AC}"
+Project("{54F91283-7BC4-4236-8FF9-10F437C3AD48}") = "UltimateWorkingTitle", "UltimateWorkingTitle.cproj", "{195F10F6-EADB-41D1-9FFA-A9F0793A31AC}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

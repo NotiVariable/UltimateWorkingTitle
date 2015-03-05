@@ -96,7 +96,37 @@
     </ToolchainSettings>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="UltimateWorkingTitle.c">
+    <Compile Include="atmega328p_spi.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="atmega328p_spi.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="atmega328p_uart.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="atmega328p_uart.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="main.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="sd.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="sd.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="ultimateGPS.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="ultimateGPS.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="wifi.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="wifi.h">
       <SubType>compile</SubType>
     </Compile>
   </ItemGroup>
