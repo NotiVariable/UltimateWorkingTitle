@@ -96,39 +96,42 @@
     </ToolchainSettings>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="atmega328p_spi.c">
+    <Compile Include="src\atmega328p_spi.c">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="atmega328p_spi.h">
+    <Compile Include="src\atmega328p_spi.h">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="atmega328p_uart.c">
+    <Compile Include="src\atmega328p_uart.c">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="atmega328p_uart.h">
+    <Compile Include="src\atmega328p_uart.h">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="UltimateWorkingTitle.c">
+    <Compile Include="src\sd.c">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="sd.c">
+    <Compile Include="src\sd.h">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="sd.h">
+    <Compile Include="src\ultimateGPS.c">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="ultimateGPS.c">
+    <Compile Include="src\ultimateGPS.h">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="ultimateGPS.h">
+    <Compile Include="src\UltimateWorkingTitle.c">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="wifi.c">
+    <Compile Include="src\wifi.c">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="wifi.h">
+    <Compile Include="src\wifi.h">
       <SubType>compile</SubType>
     </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="src" />
   </ItemGroup>
   <Import Project="$(AVRSTUDIO_EXE_PATH)\\Vs\\Compiler.targets" />
 </Project>

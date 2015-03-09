@@ -17,8 +17,12 @@
 
 #define BLOCK_SIZE 4
 
+#define SD_AssertSS	  (SD_PORT &= ~(1<<SD_SS))
+#define SD_DeassertSS (SD_PORT |= (1<<SD_SS))
+
 enum {
 	GO_IDLE_STATE			= 0,
+	SEND_IF_COND			= 8,
 	READ_SINGLE_BLOCK		= 17,
 	READ_MULTIPLE_BLOCK		= 18,
 	WRITE_BLOCK				= 24,
@@ -28,12 +32,10 @@ enum {
 	READ_OCR				= 58
 };
 
-void SD_Init();
+char SD_Init();
 
-char SD_SendCommand(char cmd, int arg);
-
-void SD_SetIdle();
-void SD_SetBlockSize();
+char SD_SendCommand(char cmd, int arg, char* status, unsigned char size);
+char SD_SendAppCommand(char cmd, int arg, char* status, unsigned char size);
 
 void SD_ReadBlock(int address, char* data);
 void SD_ReadBlocks(int address, char* data);

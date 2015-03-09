@@ -14,9 +14,10 @@
 #define SPI_DDR DDRB
 #define SCK  5
 #define MISO 4
-#define MOSI 3 
+#define MOSI 3
+#define _SS  2
 
-void SPI_Init(char ss);
+void SPI_Init();
 char SPI_GetByte();
 char SPI_SendByte(char data);
 void SPI_SendData(char* data, unsigned short size);
