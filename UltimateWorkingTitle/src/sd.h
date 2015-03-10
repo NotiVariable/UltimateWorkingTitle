@@ -1,8 +1,6 @@
 /*
  * sd.h
- *
- * Created: 02-03-2015 12:57:02
- *  Author: Patrik
+ * Author: ITAMS - Group 9
  */ 
 
 
@@ -32,16 +30,25 @@ enum {
 	READ_OCR				= 58
 };
 
+enum {
+	R1_Size = 1,
+	R2_Size = 1,
+	R3_Size = 5,
+	R7_Size = 5
+};
+
 char SD_Init();
 
-char SD_SendCommand(char cmd, int arg, char* status, unsigned char size);
-char SD_SendAppCommand(char cmd, int arg, char* status, unsigned char size);
+char SD_SendCommand(char cmd, int arg, char crc, char* status, char size);
+char SD_SendAppCommand(char cmd, int arg, char crc, char* status, char size);
 
-void SD_ReadBlock(int address, char* data);
-void SD_ReadBlocks(int address, char* data);
+char SD_ReadBlock(int address, char* data);
+char SD_ReadBlocks(int address, int nbrOfBlocks, char* data);
 
-void SD_WriteBlock(int address, char* data);
-void SD_WriteBlocks(int address, char* data);
+char SD_WriteBlock(int address, char* data);
+char SD_WriteBlocks(int address, int nbrOfBlocks, char* data);
+
+char SD_EraseBlocks(int address, int nbrOfBlocks);
 
 
 

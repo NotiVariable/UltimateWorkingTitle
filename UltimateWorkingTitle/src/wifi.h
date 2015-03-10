@@ -1,8 +1,6 @@
 /*
  * wifi.h
- *
- * Created: 02-03-2015 12:56:36
- *  Author: Patrik
+ * Author: ITAMS - Group 9
  */ 
 
 

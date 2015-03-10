@@ -1,53 +1,64 @@
 /*
  * sd.c
- *
- * Created: 02-03-2015 12:56:55
- *  Author: Patrik
+ * Author: ITAMS - Group 9
  */ 
 
 #include "sd.h"
 
 char SD_Init() {
-	char counter = 10, size = 0, status[5] = {0}, version = 0;
+	char counter = 10, status[5] = {0};
 	
 	// set sd ss pin to output
-	SD_DDR |= (1<<SD_SS);		// set sd ss low	SD_AssertSS;		// send 10 idle bytes	for(char i=0; i<10; i++)		SPI_SendByte(0xFF);
-	// set sd ss high
-	SD_DeassertSS;
+	SD_DDR |= (1<<SD_SS);		// send 10 idle bytes	for(char i=0; i<10; i++)		SPI_SendByte(0xFF);
 
-	// set sd card to idle state (return 1 if card is not in idle state after 10 tries)
+	// set sd card to idle state (return -1 if card is not in idle state after 10 tries)
 	do {
 		if(!(counter--))
-			return 1;
-	} while(SD_SendCommand(GO_IDLE_STATE, 0, status, size) != 1);
+			return -1;
+	} while(SD_SendCommand(GO_IDLE_STATE, 0, 0, status, R1_Size) != 1);
 	
-	// check version of sd card, and if the voltage level is legal
-	SD_SendCommand(SEND_IF_COND, 0, status, size);
+	// send sd card interface condition
+	SD_SendCommand(SEND_IF_COND, 0x01AA, 0x86, status, R7_Size);
 	
-	// check 'illegal command' bit
-	if(status[0] & 4) {
-		// old sd card
-		SD_SendCommand(READ_OCR, 0, status, size);
-	} else {
-		// newer sd card
-		version = 1;
+	// if the command is illegal the card is v1
+	if(status[0] & 0x04) {	// old card
+		// read the ocr register of the sd card
+		SD_SendCommand(READ_OCR, 0, 0, status, R3_Size);
+		
+		// return -3 if the card cannot operate at 3.3V
+		if(!(status[2] & 0x03))
+			return -3;
+		
+		// activate the sd card's initialization process (return -4 if card is not initialized after 20 tries)
+		counter = 20;
+		while(SD_SendAppCommand(SD_SEND_OP_COND, 0, 0, status, R1_Size)) {
+			if(!(counter--))
+				return -4;
+		}
+				
+		// return 0 to indicate that the sd card is a standard capacity card
+		return 0;
+	} else {				// newer card
+		// return -2 if voltage and/or check pattern is incorrect
+		if(status[3] != 0x01 || status[4] != 0xAA)
+			return -2;
+		
+		// activate the sd card's initialization process (return -4 if card is not initialized after 20 tries)
+		counter = 20;
+		while(SD_SendAppCommand(SD_SEND_OP_COND, 0, 0, status, R1_Size)) {
+			if(!(counter--))
+				return -4;
+		}
+		
+		// read the ocr register of the sd card
+		SD_SendCommand(READ_OCR, 0, 0, status, R3_Size);
+		
+		// return 0 if the sd card is a standard capacity card and 1 if it is a high capacity card
+		return (status[1] & 0x40)>>2;
 	}
-	
-	// activate sd cards initialization process
-	SD_SendAppCommand(SD_SEND_OP_COND, 0, status, size);
-	
-	if(version) {
-		// read the OCR register in order to determine if this is a high capacity (SDHC) card or a standard v2 SD card
-		SD_SendCommand(READ_OCR, 0, status, size);
-	}
-	
-	// return value:
-	// |ERROR|||||ILLEGAL VOLTAGE|SDHC|VERSION|
-	
-	return 0;
 }
 
-char SD_SendCommand(char cmd, int arg, char* status, unsigned char size) {
+char SD_SendCommand(char cmd, int arg, char crc, char* status, char size) {
 	// set ss low for the sd card to start communication
 	SD_AssertSS;
 	
@@ -62,33 +73,118 @@ char SD_SendCommand(char cmd, int arg, char* status, unsigned char size) {
 	SPI_SendByte((arg & 0x0000FF00) >> 8);
 	SPI_SendByte(arg);
 	// send crc and stop bit
-	SPI_SendByte(0x95);
-	
-/*	
-	// make sure that size is 0
-	size = 0;
-	
-	// read until MISO goes idle (max 5 bytes)
-	while((status[size++] = SPI_GetByte()) != 0xFF && size < 5);
-*/
+	SPI_SendByte(crc | 0x01);
 
-	// wait for response
-	while((*status = SPI_GetByte()) == 0xFF);
-	// set size
-	size = 1;
-	// read until MISO goes idle (max 5 bytes)
-	while((status[size++] = SPI_GetByte()) != 0xFF && size < 5);
-	
+	// wait one byte for response
+	SPI_SendByte(0xFF);
+
+	// read specified number of bytes
+	for(char i=0; i<size; i++)
+		status[(short)i] = SPI_GetByte();
+
 	// set ss high for the sd card to stop communication
 	SD_DeassertSS;
 	
 	return *status;
 }
 
-char SD_SendAppCommand(char cmd, int arg, char* status, unsigned char size) {
+char SD_SendAppCommand(char cmd, int arg, char crc, char* status, char size) {
 	// tell sd card that next command is a app command
-	SD_SendCommand(APP_CMD, 0, status, size);
-	
+	SD_SendCommand(APP_CMD, 0, 0, status, size);
 	// send app command
-	return SD_SendCommand(cmd, arg, status, size);
+	return SD_SendCommand(cmd, arg, 0, status, size);
+}
+
+char SD_ReadBlock(int address, char* data) {
+	char status, counter = 50;
+
+	// send a 'read single block' command
+	status = SD_SendCommand(READ_SINGLE_BLOCK, address<<9, 0, &status, R1_Size);
+	
+	// return status if its not 0
+	if(status)
+		return status;
+
+	// set ss low
+	SD_AssertSS;
+
+	// wait for start block token (0xFE)
+	while(SPI_GetByte() != 0xfe) {
+		// set ss high and return -1 if token isn't received within 50 tries (timeout)
+		if(!(counter--)) {
+			SD_DeassertSS;
+			return -1;
+		}
+	}
+	
+	// read 512 bytes
+	for(short i=0; i<512; i++)
+		data[i] = SPI_GetByte();
+
+	// read 16 but CRC (not checked)
+	SPI_GetByte();
+	SPI_GetByte();
+	// send idle byte
+	SPI_SendByte(0xFF);
+	SD_DeassertSS;
+
+	// return 0 on success
+	return 0;
+}
+
+char SD_ReadBlocks(int address, int nbrOfBlocks, char* data) {
+	
+	
+	
+	// return 0 on success
+	return 0;
+}
+
+char SD_WriteBlock(int address, char* data) {
+	char status, counter = 50;
+
+	// send a 'read single block' command
+	status = SD_SendCommand(WRITE_BLOCK, address<<9, 0, &status, R1_Size);
+	
+	// return status if its not 0
+	if(status)
+		return status;
+
+	// set ss low
+	SD_AssertSS;
+
+	// send start token
+	SPI_SendByte(0xFE);
+	
+	// send 512 bytes
+	for(short i=0; i<512; i++)
+		SPI_SendByte(data[i]);
+	
+	// send dummy crc
+	SPI_SendByte(0xFF);
+	SPI_SendByte(0xFF);
+	
+	// read card status
+	status = SPI_GetByte();
+	
+	// return status if data wasn't accepted ('1011 = crc error' / '1101' = write error)
+	if((response & 0x1F) != 0x05) {
+		SD_DeassertSS;
+		return status;
+	}
+	
+	// return 0 on success
+	return 0;
+}
+
+char SD_WriteBlocks(int address, int nbrOfBlocks, char* data) {
+
+	// return 0 on success
+	return 0;
+}
+
+char SD_EraseBlocks(int address, int nbrOfBlocks) {
+	
+	// return 0 on success
+	return 0;
 }

@@ -1,8 +1,6 @@
 /*
  * atmega328p_spi.c
- *
- * Created: 02-03-2015 12:56:11
- *  Author: Patrik
+ * Author: ITAMS - Group 9
  */ 
 
 #include "atmega328p_spi.h"

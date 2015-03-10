@@ -108,6 +108,24 @@
     <Compile Include="src\atmega328p_uart.h">
       <SubType>compile</SubType>
     </Compile>
+    <Compile Include="src\ff\diskio.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\ff\diskio.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\ff\ff.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\ff\ff.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\ff\ffconf.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\ff\integer.h">
+      <SubType>compile</SubType>
+    </Compile>
     <Compile Include="src\sd.c">
       <SubType>compile</SubType>
     </Compile>
@@ -132,6 +150,7 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="src" />
+    <Folder Include="src\ff" />
   </ItemGroup>
   <Import Project="$(AVRSTUDIO_EXE_PATH)\\Vs\\Compiler.targets" />
 </Project>
