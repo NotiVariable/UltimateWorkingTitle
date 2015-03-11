@@ -109,7 +109,7 @@ char SD_ReadBlock(int address, char* data) {
 	SD_AssertSS;
 
 	// wait for start block token (0xFE)
-	while(SPI_GetByte() != 0xfe) {
+	while(SPI_GetByte() != 0xFE) {
 		// set ss high and return -1 if token isn't received within 50 tries (timeout)
 		if(!(counter--)) {
 			SD_DeassertSS;
@@ -133,15 +133,57 @@ char SD_ReadBlock(int address, char* data) {
 }
 
 char SD_ReadBlocks(int address, int nbrOfBlocks, char* data) {
+	char status, counter = 50;
+
+	// send a 'read single block' command
+	status = SD_SendCommand(READ_MULTIPLE_BLOCK, address<<9, 0, &status, R1_Size);
 	
+	// return status if its not 0
+	if(status)
+		return status;
+		
+	// set ss low
+	SD_AssertSS;
+
+	for(int i=0; i<nbrOfBlocks; i++) {
+		// wait for start block token (0xFE)
+		while(SPI_GetByte() != 0xFE) {
+			// set ss high and return -1 if token isn't received within 50 tries (timeout)
+			if(!(counter--)) {
+				SD_DeassertSS;
+				return -1;
+			}
+		}
+		
+		// read 512 bytes
+		for(short i=0; i<512; i++)
+			data[i] = SPI_GetByte();
+
+		// read 16 but CRC (not checked)
+		SPI_GetByte();
+		SPI_GetByte();
+		// send idle byte
+		SPI_SendByte(0xFF);
+	}
+	// set ss high
+	SD_DeassertSS;
 	
+	// force the card to stop transmission
+	status = SD_SendCommand(STOP_TRANSMISSION, 0, 0, &status, R1_Size);
 	
-	// return 0 on success
-	return 0;
+	// set ss low
+	SD_AssertSS;
+	// send idle byte
+	SPI_SendByte(0xFF);
+	// set ss high
+	SD_DeassertSS;
+	
+	// return status
+	return status;
 }
 
 char SD_WriteBlock(int address, char* data) {
-	char status, counter = 50;
+	char status;
 
 	// send a 'read single block' command
 	status = SD_SendCommand(WRITE_BLOCK, address<<9, 0, &status, R1_Size);
@@ -168,7 +210,7 @@ char SD_WriteBlock(int address, char* data) {
 	status = SPI_GetByte();
 	
 	// return status if data wasn't accepted ('1011 = crc error' / '1101' = write error)
-	if((response & 0x1F) != 0x05) {
+	if((status & 0x1F) != 0x05) {
 		SD_DeassertSS;
 		return status;
 	}
@@ -178,13 +220,73 @@ char SD_WriteBlock(int address, char* data) {
 }
 
 char SD_WriteBlocks(int address, int nbrOfBlocks, char* data) {
+	char status, counter = 50;
+
+	// send a 'read single block' command
+	status = SD_SendCommand(WRITE_MULTIPLE_BLOCK, address<<9, 0, &status, R1_Size);
+	
+	// return status if its not 0
+	if(status)
+		return status;
+
+	// set ss low
+	SD_AssertSS;
+	
+	for(int i=0; i<nbrOfBlocks; i++) {
+		// send start token
+		SPI_SendByte(0xFE);
+		
+		// send 512 bytes
+		for(short i=0; i<512; i++)
+			SPI_SendByte(data[i]);
+		
+		// send dummy crc
+		SPI_SendByte(0xFF);
+		SPI_SendByte(0xFF);
+		
+		// read card status
+		status = SPI_GetByte();
+		
+		// return status if data wasn't accepted ('1011 = crc error' / '1101' = write error)
+		if((status & 0x1F) != 0x05) {
+			SD_DeassertSS;
+			return status;
+		}
+		
+		// wait sd card to finish writing and get idle
+		while(!SPI_GetByte()) {
+			// set ss high and return -1 if token isn't received within 50 tries (timeout)
+			if(!(counter--)) {
+				SD_DeassertSS;
+				return -1;
+			}
+		}
+	}
 
 	// return 0 on success
 	return 0;
 }
 
 char SD_EraseBlocks(int address, int nbrOfBlocks) {
+	char status;
+
+	// send address of first block to be erased
+	status = SD_SendCommand(ERASE_WR_BLK_START_ADDR, address<<9, 0, &status, R1_Size);
 	
-	// return 0 on success
-	return 0;
+	// return status if its not 0
+	if(status)
+		return status;
+
+	// send address of last block to be erased
+	status = SD_SendCommand(ERASE_WR_BLK_END_ADDR, (address+nbrOfBlocks-1)<<9, 0, &status, R1_Size);
+	
+	// return status if its not 0
+	if(status)
+		return status;
+
+	// erase selected blocks
+	status = SD_SendCommand(ERASE, 0, 0, &status, R1_Size);
+	
+	// return status
+	return status;
 }

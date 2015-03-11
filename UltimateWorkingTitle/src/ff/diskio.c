@@ -21,29 +21,37 @@
 /*-----------------------------------------------------------------------*/
 
 DSTATUS disk_status (
-	BYTE pdrv		/* Physical drive nmuber to identify the drive */
+	BYTE pdrv		/* Physical drive number to identify the drive */
 )
 {
-	DSTATUS stat;
-	int result;
+	DSTATUS stat = 0;
+	int result = 0;
+	char status[2] = {0};
 
 	switch (pdrv) {
 	case ATA :
-		result = ATA_disk_status();
+		// result = ATA_disk_status();
 
 		// translate the reslut code here
 
 		return stat;
 
 	case MMC :
-		result = MMC_disk_status();
+		// get sd card status
+		result = SD_SendCommand(SEND_STATUS, 0, 0, status, R2_Size);
 
-		// translate the reslut code here
+		// translate the result code here
+		if(status[1] & 0x02)
+			stat = STA_PROTECT;
+		else if(result)
+			stat = STA_NOINIT;
+		else
+			stat = 0;
 
 		return stat;
 
 	case USB :
-		result = USB_disk_status();
+		// result = USB_disk_status();
 
 		// translate the reslut code here
 
@@ -62,26 +70,28 @@ DSTATUS disk_initialize (
 	BYTE pdrv				/* Physical drive nmuber to identify the drive */
 )
 {
-	DSTATUS stat;
-	int result;
+	DSTATUS stat = 0;;
+	int result = 0;
 
 	switch (pdrv) {
 	case ATA :
-		result = ATA_disk_initialize();
+		// result = ATA_disk_initialize();
 
 		// translate the reslut code here
 
 		return stat;
 
 	case MMC :
-		result = MMC_disk_initialize();
+		result = SD_Init();
 
 		// translate the reslut code here
+		if(result != 0)
+			return STA_NOINIT;
 
-		return stat;
+		return 0;
 
 	case USB :
-		result = USB_disk_initialize();
+		// result = USB_disk_initialize();
 
 		// translate the reslut code here
 
@@ -103,32 +113,40 @@ DRESULT disk_read (
 	UINT count		/* Number of sectors to read */
 )
 {
-	DRESULT res;
-	int result;
+	DRESULT res = 0;
+	int result = 0;
 
 	switch (pdrv) {
 	case ATA :
 		// translate the arguments here
 
-		result = ATA_disk_read(buff, sector, count);
+		// result = ATA_disk_read(buff, sector, count);
 
 		// translate the reslut code here
 
 		return res;
 
 	case MMC :
-		// translate the arguments here
+		// call ReadBlock / ReadBlocks based on size of count
+		if(count == 0)
+			return RES_ERROR;
+		else if (count == 1)
+			result = SD_ReadBlock(sector, (char*)buff);
+		else
+			result = SD_ReadBlocks(sector, count, (char*)buff);
 
-		result = MMC_disk_read(buff, sector, count);
-
-		// translate the reslut code here
+		// translate the result code here
+		if(result)
+			res = RES_ERROR;
+		else
+			res = RES_OK;
 
 		return res;
 
 	case USB :
 		// translate the arguments here
 
-		result = USB_disk_read(buff, sector, count);
+		// result = USB_disk_read(buff, sector, count);
 
 		// translate the reslut code here
 
@@ -152,23 +170,35 @@ DRESULT disk_write (
 	UINT count			/* Number of sectors to write */
 )
 {
-	DRESULT res;
-	int result;
+	DRESULT res = 0;
+	int result = 0;
 
 	switch (pdrv) {
 	case ATA :
 		// translate the arguments here
 
-		result = ATA_disk_write(buff, sector, count);
+		// result = ATA_disk_write(buff, sector, count);
 
 		// translate the reslut code here
 
 		return res;
 
 	case MMC :
-		// translate the arguments here
+		// call WriteBlock / WriteBlocks based on size of count
+		if(count == 0)
+			return RES_ERROR;
+		else if (count == 1)
+			result = SD_WriteBlock(sector, (char*)buff);
+		else
+			result = SD_WriteBlocks(sector, count, (char*)buff);
 
-		result = MMC_disk_write(buff, sector, count);
+			// translate the result code here
+			if(result)
+				res = RES_ERROR;
+			else
+				res = RES_OK;
+
+			return res;
 
 		// translate the reslut code here
 
@@ -177,7 +207,7 @@ DRESULT disk_write (
 	case USB :
 		// translate the arguments here
 
-		result = USB_disk_write(buff, sector, count);
+		// result = USB_disk_write(buff, sector, count);
 
 		// translate the reslut code here
 
@@ -200,8 +230,8 @@ DRESULT disk_ioctl (
 	void *buff		/* Buffer to send/receive control data */
 )
 {
-	DRESULT res;
-	int result;
+	DRESULT res = 0;
+	// int result = 0;
 
 	switch (pdrv) {
 	case ATA :
