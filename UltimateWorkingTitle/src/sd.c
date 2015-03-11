@@ -6,12 +6,12 @@
 #include "sd.h"
 
 char SD_Init() {
-	char counter = 10, status[5] = {0};
+	char counter = 50, status[5] = {0};
 	
 	// set sd ss pin to output
 	SD_DDR |= (1<<SD_SS);		// send 10 idle bytes	for(char i=0; i<10; i++)		SPI_SendByte(0xFF);
 
-	// set sd card to idle state (return -1 if card is not in idle state after 10 tries)
+	// set sd card to idle state (return -1 if card is not in idle state after 50 tries)
 	do {
 		if(!(counter--))
 			return -1;
@@ -29,8 +29,8 @@ char SD_Init() {
 		if(!(status[2] & 0x03))
 			return -3;
 		
-		// activate the sd card's initialization process (return -4 if card is not initialized after 20 tries)
-		counter = 20;
+		// activate the sd card's initialization process (return -4 if card is not initialized after 50 tries)
+		counter = 50;
 		while(SD_SendAppCommand(SD_SEND_OP_COND, 0, 0, status, R1_Size)) {
 			if(!(counter--))
 				return -4;
@@ -43,8 +43,8 @@ char SD_Init() {
 		if(status[3] != 0x01 || status[4] != 0xAA)
 			return -2;
 		
-		// activate the sd card's initialization process (return -4 if card is not initialized after 20 tries)
-		counter = 20;
+		// activate the sd card's initialization process (return -4 if card is not initialized after 50 tries)
+		counter = 50;
 		while(SD_SendAppCommand(SD_SEND_OP_COND, 0, 0, status, R1_Size)) {
 			if(!(counter--))
 				return -4;
