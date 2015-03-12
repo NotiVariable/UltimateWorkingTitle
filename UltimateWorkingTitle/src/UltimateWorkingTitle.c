@@ -50,14 +50,11 @@ int main(void)
 				f_write(&Fil, str, 5, &bw);
 				
 				// To convert double to ASCII use dtostre()
-				// The speed in int
-				sprintf(str, "Speed in int, km/t: %d\n", (int)gpsInfo.speed);
-				f_write(&Fil, str, 21, &bw);									// + tal
 				// The speed in double
 				sprintf(str, "The speed is: ");
 				f_write(&Fil, str, 14, &bw);
 				dtostre(gpsInfo.speed, str, 5, DTOSTR_ALWAYS_SIGN);
-				f_write(&Fil, str, 0, &bw);										// + tal
+				f_write(&Fil, str, 6, &bw);
 				str[0] = '\n';
 				f_write(&Fil, str, 1, &bw);
 				// The course in double		
