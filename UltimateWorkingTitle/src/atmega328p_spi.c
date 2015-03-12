@@ -17,7 +17,7 @@ void SPI_Init() {
 	// set MISO to input
 	SPI_DDR &= ~(1<<MISO);
 	// enable SPI master and set clock rate to F_CPU/64
-	SPCR = (1<<SPE) | (1<<MSTR) | (1<<SPR1);
+	SPCR = (1<<SPE) | (1<<MSTR) | (1<<SPR1) | (1<<SPR0);
 	// set "SS" pin to previous mode
 	SPI_DDR = ss ? SPI_DDR | (1<<ss) : SPI_DDR & ~(1<<ss);
 }

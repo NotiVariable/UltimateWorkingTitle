@@ -705,7 +705,9 @@ FRESULT move_window (
 }
 
 
-
+DWORD get_fattime() {
+	return 0;
+}
 
 /*-----------------------------------------------------------------------*/
 /* Synchronize file system and strage device                             */
